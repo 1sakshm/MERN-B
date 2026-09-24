@@ -1,3 +1,4 @@
+import mongoose from 'mongoose'
 import Customer from "../models/customer.models.js"
 import bcrypt from 'bcrypt'
 import { genToken } from "../utils/generateToken.js"
@@ -8,9 +9,20 @@ const cookieOptions = {
     sameSite: "lax",
 }
 
+const ensureDatabaseReady = (res) => {
+    if (mongoose.connection.readyState !== 1) {
+        return res.status(503).json({
+            message: "Database unavailable. Please ensure MongoDB Atlas allows your current IP address.",
+        })
+    }
+    return null
+}
 
 export const registercustomer = async (req, res) => {
     try {
+        const dbCheck = ensureDatabaseReady(res)
+        if (dbCheck) return dbCheck
+
         const { fullname, email, password, phone } = req.body
 
         if (!fullname || !email || !password || !phone) {
@@ -48,6 +60,9 @@ export const registercustomer = async (req, res) => {
 
 export const logincustomer = async (req, res) => {
     try {
+        const dbCheck = ensureDatabaseReady(res)
+        if (dbCheck) return dbCheck
+
         const { email, password } = req.body
 
         if (!email || !password) {
